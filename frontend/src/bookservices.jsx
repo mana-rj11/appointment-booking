@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Star, Calendar, Clock, User, LogOut, Bell, X } from 'lucide-react';
+import { Search, MapPin, Star, Calendar, User, LogOut, Bell, X } from 'lucide-react';
 import API from './services/api';
 
 const BookServices = () => {
-  // États pour l'authentification
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState('login'); // 'login' ou 'register'
+  const [authMode, setAuthMode] = useState('login');
   
-  // États pour les formulaires
   const [authForm, setAuthForm] = useState({
     name: '',
     email: '',
@@ -17,28 +15,23 @@ const BookServices = () => {
     phone: ''
   });
   
-  // États pour les données
   const [businesses, setBusinesses] = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [myBookings, setMyBookings] = useState([]);
   const [notifications, setNotifications] = useState([]);
   
-  // États pour les filtres
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tous');
   
-  // États pour les modals
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   
-  // État pour la réservation
   const [bookingForm, setBookingForm] = useState({
     serviceId: '',
     bookingDate: '',
     bookingTime: ''
   });
 
-  // Vérifier si l'utilisateur est connecté au chargement
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (token) {
@@ -46,17 +39,10 @@ const BookServices = () => {
     }
   }, []);
 
-  // Charger les entreprises
   useEffect(() => {
     fetchBusinesses();
-}, []);
-}
+  }, []);
 
-// ==========================================
-  // FONCTIONS API
-  // ==========================================
-
-  // Récupérer le profil utilisateur
   const fetchUserProfile = async () => {
     try {
       const { data } = await API.get('/auth/profile');
@@ -71,7 +57,6 @@ const BookServices = () => {
     }
   };
 
-  // Récupérer les entreprises
   const fetchBusinesses = async () => {
     try {
       const { data } = await API.get('/businesses');
@@ -81,7 +66,6 @@ const BookServices = () => {
     }
   };
 
-  // Récupérer mes réservations
   const fetchMyBookings = async () => {
     try {
       const { data } = await API.get('/bookings/my-bookings');
@@ -91,7 +75,6 @@ const BookServices = () => {
     }
   };
 
-  // Récupérer les notifications
   const fetchNotifications = async () => {
     try {
       const { data } = await API.get('/notifications');
@@ -101,7 +84,6 @@ const BookServices = () => {
     }
   };
 
-  // Inscription
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
@@ -118,7 +100,6 @@ const BookServices = () => {
     }
   };
 
-  // Connexion
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -138,7 +119,6 @@ const BookServices = () => {
     }
   };
 
-  // Déconnexion
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
     setIsAuthenticated(false);
@@ -148,7 +128,6 @@ const BookServices = () => {
     alert('Déconnexion réussie');
   };
 
-  // Créer une réservation
   const handleCreateBooking = async (e) => {
     e.preventDefault();
     
@@ -176,7 +155,6 @@ const BookServices = () => {
     }
   };
 
-  // Annuler une réservation
   const handleCancelBooking = async (bookingId) => {
     if (!window.confirm('Voulez-vous vraiment annuler cette réservation ?')) {
       return;
@@ -192,7 +170,6 @@ const BookServices = () => {
     }
   };
 
-// Filtrer les entreprises
   const filteredBusinesses = businesses.filter(business => {
     const matchesSearch = business.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          business.location.toLowerCase().includes(searchTerm.toLowerCase());
@@ -201,43 +178,43 @@ const BookServices = () => {
   });
 
   const categories = ['Tous', 'Coiffure', 'Beauté', 'Massage', 'Fitness', 'Restaurant'];
+}
 
-  return (
-    <div className="min-h-screen bg-gray-50">
+return (
+    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
       {/* HEADER */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-800">BookServices</h1>
+      <header style={{ backgroundColor: 'white', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', position: 'sticky', top: 0, zIndex: 50 }}>
+        <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1f2937' }}>BookServices</h1>
             
-            <div className="flex items-center gap-4">
-              {/* Notifications */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               {isAuthenticated && (
-                <div className="relative">
+                <div style={{ position: 'relative' }}>
                   <button
                     onClick={() => setShowNotifications(!showNotifications)}
-                    className="relative p-2 text-gray-600 hover:text-orange-500"
+                    style={{ position: 'relative', padding: '0.5rem', color: '#4b5563', background: 'none', border: 'none', cursor: 'pointer' }}
                   >
                     <Bell size={24} />
                     {notifications.filter(n => !n.is_read).length > 0 && (
-                      <span className="absolute top-0 right-0 w-5 h-5 bg-orange-500 text-white text-xs rounded-full flex items-center justify-center">
+                      <span style={{ position: 'absolute', top: 0, right: 0, width: '1.25rem', height: '1.25rem', backgroundColor: '#f97316', color: 'white', fontSize: '0.75rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {notifications.filter(n => !n.is_read).length}
                       </span>
                     )}
                   </button>
 
                   {showNotifications && (
-                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border max-h-96 overflow-y-auto">
-                      <div className="p-4 border-b">
-                        <h3 className="font-semibold">Notifications</h3>
+                    <div style={{ position: 'absolute', right: 0, marginTop: '0.5rem', width: '20rem', backgroundColor: 'white', borderRadius: '0.5rem', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb', maxHeight: '24rem', overflowY: 'auto' }}>
+                      <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>
+                        <h3 style={{ fontWeight: 600 }}>Notifications</h3>
                       </div>
                       {notifications.length === 0 ? (
-                        <p className="p-4 text-gray-500 text-center">Aucune notification</p>
+                        <p style={{ padding: '1rem', color: '#6b7280', textAlign: 'center' }}>Aucune notification</p>
                       ) : (
                         notifications.map(notif => (
-                          <div key={notif.id} className={`p-4 border-b hover:bg-gray-50 ${!notif.is_read ? 'bg-orange-50' : ''}`}>
-                            <p className="font-medium text-sm">{notif.title}</p>
-                            <p className="text-xs text-gray-600 mt-1">{notif.message}</p>
+                          <div key={notif.id} style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb', backgroundColor: !notif.is_read ? '#fff7ed' : 'white' }}>
+                            <p style={{ fontWeight: 500, fontSize: '0.875rem' }}>{notif.title}</p>
+                            <p style={{ fontSize: '0.75rem', color: '#4b5563', marginTop: '0.25rem' }}>{notif.message}</p>
                           </div>
                         ))
                       )}
@@ -246,17 +223,16 @@ const BookServices = () => {
                 </div>
               )}
 
-              {/* Bouton Auth */}
               {isAuthenticated ? (
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-lg">
-                    <User size={20} className="text-gray-600" />
-                    <span className="font-medium">{currentUser?.name}</span>
-                    <span className="text-sm text-orange-500">({currentUser?.loyalty_points} pts)</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#f3f4f6', padding: '0.5rem 1rem', borderRadius: '0.5rem' }}>
+                    <User size={20} style={{ color: '#4b5563' }} />
+                    <span style={{ fontWeight: 500 }}>{currentUser?.name}</span>
+                    <span style={{ fontSize: '0.875rem', color: '#f97316' }}>({currentUser?.loyalty_points} pts)</span>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', color: '#dc2626', backgroundColor: 'white', border: 'none', borderRadius: '0.5rem', cursor: 'pointer' }}
                   >
                     <LogOut size={20} />
                     Déconnexion
@@ -268,7 +244,7 @@ const BookServices = () => {
                     setShowAuthModal(true);
                     setAuthMode('login');
                   }}
-                  className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600"
+                  style={{ backgroundColor: '#f97316', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}
                 >
                   Se connecter
                 </button>
@@ -276,22 +252,21 @@ const BookServices = () => {
             </div>
           </div>
 
-          {/* Barre de recherche */}
-          <div className="mt-4 flex gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 text-gray-400" size={20} />
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
+            <div style={{ flex: 1, position: 'relative' }}>
+              <Search style={{ position: 'absolute', left: '0.75rem', top: '0.75rem', color: '#9ca3af' }} size={20} />
               <input
                 type="text"
                 placeholder="Rechercher un service..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                style={{ width: '100%', paddingLeft: '2.5rem', padding: '0.75rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}
               />
             </div>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500"
+              style={{ padding: '0.75rem 1rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}
             >
               {categories.map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
@@ -301,36 +276,30 @@ const BookServices = () => {
         </div>
       </header>
 
-      {/* CONTENU PRINCIPAL */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* MES RÉSERVATIONS */}
+      {/* CONTENU */}
+      <main style={{ maxWidth: '80rem', margin: '0 auto', padding: '2rem 1rem' }}>
         {isAuthenticated && myBookings.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-bold mb-4">Mes Réservations</h2>
-            <div className="grid gap-4">
+          <div style={{ marginBottom: '2rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>Mes Réservations</h2>
+            <div style={{ display: 'grid', gap: '1rem' }}>
               {myBookings.map(booking => (
-                <div key={booking.id} className="bg-white p-4 rounded-lg shadow border flex justify-between items-center">
+                <div key={booking.id} style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '0.5rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <h3 className="font-semibold">{booking.business_name}</h3>
-                    <p className="text-sm text-gray-600">{booking.service_name}</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      <Calendar size={16} className="inline mr-1" />
+                    <h3 style={{ fontWeight: 600 }}>{booking.business_name}</h3>
+                    <p style={{ fontSize: '0.875rem', color: '#4b5563' }}>{booking.service_name}</p>
+                    <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                      <Calendar size={16} style={{ display: 'inline', marginRight: '0.25rem' }} />
                       {new Date(booking.booking_date).toLocaleDateString('fr-FR')} à {booking.booking_time}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded-full text-sm ${
-                      booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                      booking.status === 'cancelled' ? 'bg-gray-100 text-gray-700' :
-                      'bg-blue-100 text-blue-700'
-                    }`}>
-                      {booking.status === 'confirmed' ? 'Confirmé' :
-                       booking.status === 'cancelled' ? 'Annulé' : 'Reporté'}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.875rem', backgroundColor: booking.status === 'confirmed' ? '#dcfce7' : '#f3f4f6', color: booking.status === 'confirmed' ? '#15803d' : '#4b5563' }}>
+                      {booking.status === 'confirmed' ? 'Confirmé' : booking.status === 'cancelled' ? 'Annulé' : 'Reporté'}
                     </span>
                     {booking.status === 'confirmed' && (
                       <button
                         onClick={() => handleCancelBooking(booking.id)}
-                        className="text-red-600 hover:bg-red-50 px-3 py-1 rounded"
+                        style={{ color: '#dc2626', backgroundColor: 'white', border: 'none', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', cursor: 'pointer' }}
                       >
                         Annuler
                       </button>
@@ -342,34 +311,33 @@ const BookServices = () => {
           </div>
         )}
 
-        {/* LISTE DES ENTREPRISES */}
         <div>
-          <h2 className="text-xl font-bold mb-4">Services Disponibles ({filteredBusinesses.length})</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>Services Disponibles ({filteredBusinesses.length})</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
             {filteredBusinesses.map(business => (
-              <div key={business.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+              <div key={business.id} style={{ backgroundColor: 'white', borderRadius: '0.5rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                 {business.image_url && (
-                  <img src={business.image_url} alt={business.name} className="w-full h-48 object-cover" />
+                  <img src={business.image_url} alt={business.name} style={{ width: '100%', height: '12rem', objectFit: 'cover' }} />
                 )}
-                <div className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-lg">{business.name}</h3>
-                    <div className="flex items-center gap-1 text-orange-500">
+                <div style={{ padding: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
+                    <h3 style={{ fontWeight: 'bold', fontSize: '1.125rem' }}>{business.name}</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#f97316' }}>
                       <Star size={16} fill="currentColor" />
-                      <span className="font-semibold">{business.rating}</span>
+                      <span style={{ fontWeight: 600 }}>{business.rating}</span>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600 flex items-center gap-1 mb-2">
+                  <p style={{ fontSize: '0.875rem', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '0.25rem', marginBottom: '0.5rem' }}>
                     <MapPin size={14} />
                     {business.location}
                   </p>
-                  <p className="text-sm text-gray-500 mb-3">{business.description}</p>
+                  <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.75rem' }}>{business.description}</p>
                   <button
                     onClick={() => {
                       setSelectedBusiness(business);
                       setShowBookingModal(true);
                     }}
-                    className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600"
+                    style={{ width: '100%', backgroundColor: '#f97316', color: 'white', padding: '0.5rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}
                   >
                     Réserver
                   </button>
@@ -380,13 +348,13 @@ const BookServices = () => {
         </div>
       </main>
 
-      {/* MODAL AUTHENTIFICATION */}
+      {/* MODAL AUTH */}
       {showAuthModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">{authMode === 'login' ? 'Connexion' : 'Inscription'}</h2>
-              <button onClick={() => setShowAuthModal(false)} className="text-gray-500 hover:text-gray-700">
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '0.5rem', padding: '1.5rem', width: '100%', maxWidth: '28rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{authMode === 'login' ? 'Connexion' : 'Inscription'}</h2>
+              <button onClick={() => setShowAuthModal(false)} style={{ color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer' }}>
                 <X size={24} />
               </button>
             </div>
@@ -398,7 +366,7 @@ const BookServices = () => {
                   placeholder="Nom complet"
                   value={authForm.name}
                   onChange={(e) => setAuthForm({...authForm, name: e.target.value})}
-                  className="w-full px-4 py-2 border rounded-lg mb-3 focus:ring-2 focus:ring-orange-500"
+                  style={{ width: '100%', padding: '0.5rem 1rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem', marginBottom: '0.75rem' }}
                   required
                 />
               )}
@@ -407,7 +375,7 @@ const BookServices = () => {
                 placeholder="Email"
                 value={authForm.email}
                 onChange={(e) => setAuthForm({...authForm, email: e.target.value})}
-                className="w-full px-4 py-2 border rounded-lg mb-3 focus:ring-2 focus:ring-orange-500"
+                style={{ width: '100%', padding: '0.5rem 1rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem', marginBottom: '0.75rem' }}
                 required
               />
               <input
@@ -415,7 +383,7 @@ const BookServices = () => {
                 placeholder="Mot de passe"
                 value={authForm.password}
                 onChange={(e) => setAuthForm({...authForm, password: e.target.value})}
-                className="w-full px-4 py-2 border rounded-lg mb-3 focus:ring-2 focus:ring-orange-500"
+                style={{ width: '100%', padding: '0.5rem 1rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem', marginBottom: '0.75rem' }}
                 required
               />
               {authMode === 'register' && (
@@ -424,23 +392,23 @@ const BookServices = () => {
                   placeholder="Téléphone"
                   value={authForm.phone}
                   onChange={(e) => setAuthForm({...authForm, phone: e.target.value})}
-                  className="w-full px-4 py-2 border rounded-lg mb-3 focus:ring-2 focus:ring-orange-500"
+                  style={{ width: '100%', padding: '0.5rem 1rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem', marginBottom: '0.75rem' }}
                 />
               )}
               
               <button
                 type="submit"
-                className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 mb-3"
+                style={{ width: '100%', backgroundColor: '#f97316', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', marginBottom: '0.75rem' }}
               >
                 {authMode === 'login' ? 'Se connecter' : 'S\'inscrire'}
               </button>
 
-              <p className="text-center text-sm text-gray-600">
+              <p style={{ textAlign: 'center', fontSize: '0.875rem', color: '#4b5563' }}>
                 {authMode === 'login' ? 'Pas de compte ?' : 'Déjà inscrit ?'}
                 <button
                   type="button"
                   onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
-                  className="text-orange-500 ml-1 font-medium"
+                  style={{ color: '#f97316', marginLeft: '0.25rem', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }}
                 >
                   {authMode === 'login' ? 'S\'inscrire' : 'Se connecter'}
                 </button>
@@ -450,24 +418,24 @@ const BookServices = () => {
         </div>
       )}
 
-      {/* MODAL RÉSERVATION */}
+      {/* MODAL BOOKING */}
       {showBookingModal && selectedBusiness && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Réserver - {selectedBusiness.name}</h2>
-              <button onClick={() => setShowBookingModal(false)} className="text-gray-500 hover:text-gray-700">
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '0.5rem', padding: '1.5rem', width: '100%', maxWidth: '28rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>Réserver - {selectedBusiness.name}</h2>
+              <button onClick={() => setShowBookingModal(false)} style={{ color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer' }}>
                 <X size={24} />
               </button>
             </div>
 
             <form onSubmit={handleCreateBooking}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Service</label>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Service</label>
                 <select
                   value={bookingForm.serviceId}
                   onChange={(e) => setBookingForm({...bookingForm, serviceId: e.target.value})}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                  style={{ width: '100%', padding: '0.5rem 1rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}
                   required
                 >
                   <option value="">Choisir un service</option>
@@ -477,24 +445,24 @@ const BookServices = () => {
                 </select>
               </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Date</label>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Date</label>
                 <input
                   type="date"
                   value={bookingForm.bookingDate}
                   onChange={(e) => setBookingForm({...bookingForm, bookingDate: e.target.value})}
                   min={new Date().toISOString().split('T')[0]}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                  style={{ width: '100%', padding: '0.5rem 1rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}
                   required
                 />
               </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Heure</label>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Heure</label>
                 <select
                   value={bookingForm.bookingTime}
                   onChange={(e) => setBookingForm({...bookingForm, bookingTime: e.target.value})}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                  style={{ width: '100%', padding: '0.5rem 1rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}
                   required
                 >
                   <option value="">Choisir une heure</option>
@@ -509,7 +477,7 @@ const BookServices = () => {
 
               <button
                 type="submit"
-                className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600"
+                style={{ width: '100%', backgroundColor: '#f97316', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}
               >
                 Confirmer la réservation
               </button>

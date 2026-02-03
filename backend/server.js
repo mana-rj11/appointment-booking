@@ -53,9 +53,9 @@ const globalLimiter = rateLimit({
 app.use(globalLimiter);
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 2 * 60 * 1000,
   max: 5,
-  message: { error: 'Trop de tentatives' }
+  message: { error: 'Trop de tentatives. Réessayez dans 5 minutes.' }
 });
 
 // Middleware JWT
@@ -315,9 +315,10 @@ app.get('/api/businesses', async (req, res) => {
 app.get('/api/businesses/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
+
+    // récuperer l'entreprise
     const businessResult = await pool.query(
-      'SELECT * FROM businesses WHERE id = $1 AND is_active = true',
+      'SELECT * FROM businesses WHERE id = $1',
       [id]
     );
     
@@ -327,11 +328,13 @@ app.get('/api/businesses/:id', async (req, res) => {
     
     const business = businessResult.rows[0];
     
+    // recuperer les services
     const servicesResult = await pool.query(
-      'SELECT * FROM services WHERE business_id = $1 AND is_active = true ORDER BY price',
+      'SELECT * FROM services WHERE business_id = $1 AND is_active = true',
       [id]
     );
     
+    // recuperer les créneaux
     const slotsResult = await pool.query(
       'SELECT * FROM time_slots WHERE business_id = $1 ORDER BY day_of_week, time',
       [id]
@@ -349,12 +352,11 @@ app.get('/api/businesses/:id', async (req, res) => {
     res.json({
       ...business,
       services: servicesResult.rows,
-      timeSlots: slotsResult.rows,
-      reviews: reviewsResult.rows
+      timeSlots: slotsResult.rows
     });
   } catch (error) {
-    console.error('❌ Erreur détails:', error);
-    res.status(500).json({ error: 'Erreur détails' });
+    console.error('❌ Erreur récupération entreprise:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
@@ -567,3 +569,85 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
+
+// ==========================================
+// ROUTES AVIS/REVIEWS
+// ==========================================
+
+// Créer un avis
+app.post('/api/reviews', authenticateToken, async (req, res) => {
+  try {
+    const { bookingId, businessId, serviceId, rating, comment } = req.body;
+    const userId = req.userId;
+
+    // Vérifier que la réservation existe et appartient à l'utilisateur
+    const bookingCheck = await pool.query(
+      'SELECT * FROM bookings WHERE id = $1 AND user_id = $2 AND status = $3',
+      [bookingId, userId, 'completed']
+    );
+
+    if (bookingCheck.rows.length === 0) {
+      return res.status(400).json({ error: 'Réservation non trouvée ou non terminée' });
+    }
+
+    // Vérifier qu'il n'y a pas déjà un avis
+    const existingReview = await pool.query(
+      'SELECT * FROM reviews WHERE booking_id = $1',
+      [bookingId]
+    );
+
+    if (existingReview.rows.length > 0) {
+      return res.status(400).json({ error: 'Avis déjà laissé pour cette réservation' });
+    }
+
+    // Créer l'avis
+    const result = await pool.query(
+      `INSERT INTO reviews (user_id, business_id, service_id, booking_id, rating, comment, is_published)
+       VALUES ($1, $2, $3, $4, $5, $6, true)
+       RETURNING *`,
+      [userId, businessId, serviceId, bookingId, rating, comment]
+    );
+
+    // Mettre à jour la note moyenne de l'entreprise
+    const ratingUpdate = await pool.query(
+      `UPDATE businesses 
+       SET rating = (SELECT AVG(rating) FROM reviews WHERE business_id = $1 AND is_published = true),
+           total_reviews = (SELECT COUNT(*) FROM reviews WHERE business_id = $1 AND is_published = true)
+       WHERE id = $1
+       RETURNING *`,
+      [businessId]
+    );
+
+    res.json({
+      message: 'Avis créé avec succès',
+      review: result.rows[0],
+      business: ratingUpdate.rows[0]
+    });
+  } catch (error) {
+    console.error('Erreur création avis:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Récupérer les avis d'une entreprise
+app.get('/api/businesses/:id/reviews', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `SELECT r.*, u.name as user_name, s.name as service_name
+       FROM reviews r
+       JOIN users u ON r.user_id = u.id
+       JOIN services s ON r.service_id = s.id
+       WHERE r.business_id = $1 AND r.is_published = true
+       ORDER BY r.created_at DESC
+       LIMIT 20`,
+      [id]
+    );
+
+    res.json({ reviews: result.rows });
+  } catch (error) {
+    console.error('Erreur récupération avis:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});

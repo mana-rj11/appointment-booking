@@ -27,16 +27,21 @@ const BookServices = () => {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [myBookings, setMyBookings] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tous');
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [bookingForm, setBookingForm] = useState({ businessId: '', serviceId: '', bookingDate: '', bookingTime: '' });
+  
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (token) fetchUserProfile();
-  }, []);
+    fetchBusinesses();
+    if (currentUser) {
+      fetchMyBookings();
+      fetchNotifications();
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -90,10 +95,13 @@ const BookServices = () => {
     try {
       const { data } = await API.get('/notifications');
       setNotifications(data.notifications);
+      setUnreadCount(data.unreadCount);
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur chargement notifications:', error);
     }
   };
+
+
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -233,7 +241,102 @@ const BookServices = () => {
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               {isAuthenticated ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                  
+                  {/* NOTIFICATION BELL - NOUVEAU CODE ICI */}
+                  <div style={{ position: 'relative' }}>
+                    <button 
+                      onClick={() => setShowNotifications(!showNotifications)}
+                      style={{ 
+                        background: 'white', 
+                        border: '1px solid #e5e7eb', 
+                        borderRadius: '0.5rem', 
+                        padding: '0.5rem', 
+                        cursor: 'pointer',
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      🔔
+                      {unreadCount > 0 && (
+                        <span style={{
+                          position: 'absolute',
+                          top: '-5px',
+                          right: '-5px',
+                          background: '#ef4444',
+                          color: 'white',
+                          borderRadius: '999px',
+                          width: '20px',
+                          height: '20px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold'
+                        }}>
+                          {unreadCount}
+                        </span>
+                      )}
+                    </button>
+
+                    {showNotifications && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '100%',
+                        right: 0,
+                        marginTop: '0.5rem',
+                        width: '350px',
+                        maxHeight: '400px',
+                        overflowY: 'auto',
+                        background: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '0.75rem',
+                        boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                        zIndex: 1000
+                      }}>
+                        <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold' }}>
+                          Notifications ({unreadCount} non lues)
+                        </div>
+                        {notifications.length === 0 ? (
+                          <div style={{ padding: '2rem', textAlign: 'center', color: '#9ca3af' }}>
+                            Aucune notification
+                          </div>
+                        ) : (
+                          notifications.map(notif => (
+                            <div 
+                              key={notif.id}
+                              style={{
+                                padding: '1rem',
+                                borderBottom: '1px solid #f3f4f6',
+                                background: notif.is_read ? 'white' : '#fef3c7',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <div style={{ fontWeight: 'bold', marginBottom: '0.25rem', fontSize: '0.875rem' }}>
+                                {notif.title}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                                {notif.message}
+                              </div>
+                              <div style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '0.25rem' }}>
+                                {new Date(notif.created_at).toLocaleString('fr-FR')}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {/* FIN NOTIFICATION BELL */}
+
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{ fontSize: '2rem' }}>{getLoyaltyBadge(currentUser.loyaltyPoints).icon}</span>
+
+
+
+
+
                     <span style={{ fontSize: '2rem' }}>{getLoyaltyBadge(currentUser.loyaltyPoints).icon}</span>
                     <div>
                       <div style={{ fontWeight: 'bold' }}>

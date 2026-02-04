@@ -569,6 +569,179 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erreur serveur' });
 });
 
+// ============================================
+// ROUTES DASHBOARD PROPRIÉTAIRE
+// ============================================
+
+// Middleware pour vérifier que l'utilisateur est propriétaire
+const isBusinessOwner = async (req, res, next) => {
+  try {
+    const result = await pool.query(
+      'SELECT id FROM businesses WHERE owner_id = $1',
+      [req.userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(403).json({ error: 'Accès réservé aux propriétaires' });
+    }
+    
+    req.businessId = result.rows[0].id;
+    next();
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+};
+
+// Statistiques globales
+app.get('/api/owner/stats', authenticateToken, isBusinessOwner, async (req, res) => {
+  try {
+    const statsQuery = await pool.query(`
+      SELECT 
+        COUNT(DISTINCT b.id) as total_bookings,
+        COUNT(DISTINCT b.user_id) as total_customers,
+        COALESCE(SUM(s.price * (1 - s.discount / 100.0)), 0) as total_revenue,
+        COALESCE(AVG(r.rating), 0) as average_rating
+      FROM bookings b
+      LEFT JOIN services s ON b.service_id = s.id
+      LEFT JOIN reviews r ON b.id = r.booking_id
+      WHERE b.business_id = $1
+    `, [req.businessId]);
+    
+    const stats = statsQuery.rows[0];
+    
+    res.json({
+      totalBookings: parseInt(stats.total_bookings),
+      totalCustomers: parseInt(stats.total_customers),
+      totalRevenue: parseFloat(stats.total_revenue).toFixed(2),
+      averageRating: parseFloat(stats.average_rating).toFixed(1)
+    });
+  } catch (error) {
+    console.error('Erreur stats:', error);
+    res.status(500).json({ error: 'Erreur chargement statistiques' });
+  }
+});
+
+// Liste des réservations
+app.get('/api/owner/bookings', authenticateToken, isBusinessOwner, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        b.id,
+        b.booking_date,
+        b.booking_time,
+        b.status,
+        u.name as customer_name,
+        u.email as customer_email,
+        s.name as service_name,
+        s.price
+      FROM bookings b
+      JOIN users u ON b.user_id = u.id
+      JOIN services s ON b.service_id = s.id
+      WHERE b.business_id = $1
+      ORDER BY b.booking_date DESC, b.booking_time DESC
+    `, [req.businessId]);
+    
+    res.json({ bookings: result.rows });
+  } catch (error) {
+    console.error('Erreur réservations:', error);
+    res.status(500).json({ error: 'Erreur chargement réservations' });
+  }
+});
+
+// Mettre à jour statut réservation
+app.patch('/api/owner/bookings/:id', authenticateToken, isBusinessOwner, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    // Vérifier que la réservation appartient bien à l'entreprise
+    const checkResult = await pool.query(
+      'SELECT id FROM bookings WHERE id = $1 AND business_id = $2',
+      [id, req.businessId]
+    );
+    
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Réservation non trouvée' });
+    }
+    
+    await pool.query(
+      'UPDATE bookings SET status = $1 WHERE id = $2',
+      [status, id]
+    );
+    
+    res.json({ message: 'Statut mis à jour' });
+  } catch (error) {
+    console.error('Erreur mise à jour réservation:', error);
+    res.status(500).json({ error: 'Erreur mise à jour' });
+  }
+});
+
+// Liste des services
+app.get('/api/owner/services', authenticateToken, isBusinessOwner, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        id,
+        name,
+        description,
+        price,
+        discount,
+        duration,
+        is_active
+      FROM services
+      WHERE business_id = $1
+      ORDER BY name
+    `, [req.businessId]);
+    
+    res.json({ services: result.rows });
+  } catch (error) {
+    console.error('Erreur services:', error);
+    res.status(500).json({ error: 'Erreur chargement services' });
+  }
+});
+
+// Liste des avis
+app.get('/api/owner/reviews', authenticateToken, isBusinessOwner, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        r.id,
+        r.rating,
+        r.comment,
+        r.created_at,
+        u.name as customer_name,
+        s.name as service_name
+      FROM reviews r
+      JOIN users u ON r.user_id = u.id
+      JOIN services s ON r.service_id = s.id
+      WHERE r.business_id = $1 AND r.is_published = true
+      ORDER BY r.created_at DESC
+    `, [req.businessId]);
+    
+    res.json({ reviews: result.rows });
+  } catch (error) {
+    console.error('Erreur avis:', error);
+    res.status(500).json({ error: 'Erreur chargement avis' });
+  }
+});
+
+// Info entreprise
+app.get('/api/owner/business', authenticateToken, isBusinessOwner, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, name, description, location, rating FROM businesses WHERE id = $1',
+      [req.businessId]
+    );
+    
+    res.json({ business: result.rows[0] });
+  } catch (error) {
+    console.error('Erreur entreprise:', error);
+    res.status(500).json({ error: 'Erreur chargement entreprise' });
+  }
+});
+
+
+
 // Démarrage
 app.listen(PORT, () => {
   console.log('');

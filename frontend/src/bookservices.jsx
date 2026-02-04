@@ -23,7 +23,7 @@ const BookServices = () => {
   const [selectedCategory, setSelectedCategory] = useState('Tous');
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [bookingForm, setBookingForm] = useState({ serviceId: '', bookingDate: '', bookingTime: '' });
+  const [bookingForm, setBookingForm] = useState({ businessId: '', serviceId: '', bookingDate: '', bookingTime: '' });
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');

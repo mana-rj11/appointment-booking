@@ -121,8 +121,8 @@ const validateLogin = [
 const validateBooking = [
   body('businessId').isInt({ min: 1 }),
   body('serviceId').isInt({ min: 1 }),
-  body('bookingDate').isDate(),
-  body('bookingTime').matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+  body('bookingDate').matches(/^\d{4}-\d{2}-\d{2}$/),
+  body('bookingTime').matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/),
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -376,16 +376,27 @@ app.post('/api/bookings', authenticateToken, validateBooking, async (req, res) =
     }
     
     const service = serviceResult.rows[0];
-    const dayOfWeek = new Date(bookingDate).getDay();
+    const [year, month, day] = bookingDate.split('-').map(Number);
+    const dayOfWeek = new Date(year, month - 1, day).getDay();
     
+    console.log('RECHERCHE CRÉNEAU:');
+    console.log('businessId:', businessId);
+    console.log('dayOfWeek:', dayOfWeek);
+    console.log('bookingTime:', bookingTime);
+
     const slotResult = await pool.query(
       'SELECT * FROM time_slots WHERE business_id = $1 AND day_of_week = $2 AND time = $3 AND is_available = true AND is_blocked = false',
       [businessId, dayOfWeek, bookingTime]
     );
     
     if (slotResult.rows.length === 0) {
+      console.log('❌ CRÉNEAU NON TROUVÉ !');
+      console.log('businessId:', businessId);
+      console.log('dayOfWeek calculé:', dayOfWeek);
+      console.log('bookingTime:', bookingTime);
+      console.log('bookingDate:', bookingDate);
       return res.status(400).json({ error: 'Créneau non disponible' });
-    }
+}
     
     const totalPrice = service.price * (1 - service.discount / 100);
     const pointsEarned = Math.floor(service.price);

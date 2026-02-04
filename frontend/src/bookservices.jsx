@@ -33,6 +33,10 @@ const BookServices = () => {
   const [selectedCategory, setSelectedCategory] = useState('Tous');
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingForm, setBookingForm] = useState({ businessId: '', serviceId: '', bookingDate: '', bookingTime: '' });
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 200 });
+  const [minRating, setMinRating] = useState(0);
+  const [sortBy, setSortBy] = useState('rating'); // 'rating', 'price-asc', 'price-desc', 'popularity'
+  const [showFilters, setShowFilters] = useState(false);
   
 
   useEffect(() => {
@@ -226,10 +230,27 @@ const BookServices = () => {
     }
   };
 
-  const filteredBusinesses = businesses.filter(b => {
-    const matchesSearch = b.name.toLowerCase().includes(searchTerm.toLowerCase()) || b.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'Tous' || b.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+  const filteredBusinesses = businesses
+  .filter(business => {
+    const matchCategory = selectedCategory === 'Tous' || business.category === selectedCategory;
+    const matchSearch = business.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                       business.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchRating = business.rating >= minRating;
+    
+    return matchCategory && matchSearch && matchRating;
+  })
+  .sort((a, b) => {
+    switch(sortBy) {
+      case 'price-asc':
+        return (a.min_price || 0) - (b.min_price || 0);
+      case 'price-desc':
+        return (b.min_price || 0) - (a.min_price || 0);
+      case 'popularity':
+        return b.total_reviews - a.total_reviews;
+      case 'rating':
+      default:
+        return b.rating - a.rating;
+    }
   });
 
   return (
@@ -358,6 +379,7 @@ const BookServices = () => {
               )}
             </div>
           </div>
+
           <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
             <div style={{ flex: 1, position: 'relative' }}>
               <Search style={{ position: 'absolute', left: '0.75rem', top: '0.75rem', color: '#9ca3af' }} size={20} />
@@ -366,10 +388,98 @@ const BookServices = () => {
             <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} style={{ padding: '0.75rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}>
               {['Tous', 'Coiffure', 'Beauté', 'Massage', 'Fitness'].map(cat => <option key={cat} value={cat}>{cat}</option>)}
             </select>
+            
+            {/* BOUTON FILTRES - NOUVEAU */}
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              style={{ 
+                padding: '0.75rem 1rem', 
+                border: '1px solid #e5e7eb', 
+                borderRadius: '0.5rem', 
+                background: showFilters ? '#f97316' : 'white',
+                color: showFilters ? 'white' : '#374151',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontWeight: '500'
+              }}
+            >
+              🔍 Filtres
+            </button>
           </div>
+
+          {/* PANNEAU FILTRES - NOUVEAU */}
+          {showFilters && (
+            <div style={{ 
+              marginTop: '1rem', 
+              padding: '1rem', 
+              background: 'white', 
+              border: '1px solid #e5e7eb', 
+              borderRadius: '0.5rem',
+              display: 'flex',
+              gap: '1rem',
+              flexWrap: 'wrap',
+              alignItems: 'center'
+            }}>
+              {/* Note minimum */}
+              <div style={{ flex: '1 1 200px' }}>
+                <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem', fontWeight: '500' }}>
+                  Note minimum
+                </label>
+                <select 
+                  value={minRating} 
+                  onChange={(e) => setMinRating(Number(e.target.value))}
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}
+                >
+                  <option value={0}>Toutes les notes</option>
+                  <option value={3}>⭐ 3+ et plus</option>
+                  <option value={4}>⭐ 4+ et plus</option>
+                  <option value={4.5}>⭐ 4.5+ et plus</option>
+                </select>
+              </div>
+
+              {/* Tri */}
+              <div style={{ flex: '1 1 200px' }}>
+                <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem', fontWeight: '500' }}>
+                  Trier par
+                </label>
+                <select 
+                  value={sortBy} 
+                  onChange={(e) => setSortBy(e.target.value)}
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}
+                >
+                  <option value="rating">Meilleures notes</option>
+                  <option value="popularity">Plus populaires</option>
+                  <option value="price-asc">Prix croissant</option>
+                  <option value="price-desc">Prix décroissant</option>
+                </select>
+              </div>
+
+              {/* Bouton réinitialiser */}
+              <button
+                onClick={() => {
+                  setMinRating(0);
+                  setSortBy('rating');
+                  setSelectedCategory('Tous');
+                  setSearchTerm('');
+                }}
+                style={{
+                  padding: '0.5rem 1rem',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '0.5rem',
+                  background: 'white',
+                  color: '#6b7280',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem'
+                }}
+              >
+                Réinitialiser
+              </button>
+            </div>
+          )}
         </div>
       </header>
-
 
       {/* Système de fidélité - Version discrète */}
       {currentUser && getLoyaltyBadge(currentUser.loyalty_points).nextLevel && (
@@ -595,7 +705,6 @@ const BookServices = () => {
     </div>
   </div>
 )}
-    </div>
-  );
-};
+  </div>
+)};
 export default BookServices;

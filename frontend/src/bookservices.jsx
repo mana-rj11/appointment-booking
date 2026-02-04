@@ -39,15 +39,14 @@ const BookServices = () => {
   }, []);
 
   useEffect(() => {
-    const loadBusinesses = async () => {
+    const loadData = async () => {
         await fetchBusinesses();
         // charger les avis pour chaque entreprise
-        businesses.forEach(business => {
-            fetchBusinessesReviews(business.id);
-        });
-    };
-    loadBusinesses();
-  }, []);
+        businesses.forEach(business => fetchBusinessesReviews(business.id));
+        };
+        loadData();
+    }, []);
+
 
   const fetchUserProfile = async () => {
     try {
@@ -64,10 +63,17 @@ const BookServices = () => {
 
   const fetchBusinesses = async () => {
     try {
-      const { data } = await API.get('/businesses');
+      const { data } = await API.get('/businesses', {
+        params: { category: filteredBusinesses.category, search: filteredBusinesses.search }
+      });
       setBusinesses(data.businesses);
+
+      // charger les avis pour chaque entreprise
+      data.businesses.forEach(business => {
+        fetchBusinessesReviews(business.id);
+      });
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur charhement entreprises:', error);
     }
   };
 
@@ -341,21 +347,24 @@ const BookServices = () => {
                 <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.75rem' }}>{business.description}</p>
 
 
-                {businessReviews[business.id] && businessReviews[business.id].length > 0 && (
-                    <div style={{ marginTop: '0.75rem', padding: '0.5rem', backgroundColor: '#f9fafb', borderRadius: '0.25rem' }}>
-                        <p style={{ fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.25rem' }}>Dernier avis :</p>
-                        <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.25rem' }}>
-                            {[...Array(5)].map((_, i) => (
-                                <Star key={i} size={12} fill={i < businessReviews[business.id][0].rating ? '#f97316' : 'none'} stroke="#f97316" />
-                            ))}
-                        </div>
-                        <p style={{ fontSize: '0.75rem', color: '#6b7280', fontStyle: 'italic' }}>"{businessReviews[business.id][0].comment?.substring(0, 60)}..."</p>
-                        <p style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '0.25rem' }}>- {businessReviews[business.id][0].user_name}</p>
+                {/* AFFICHER LES AVIS*/}
+                {businessReviews[business.id]?.length > 0 && (
+                  <div style={{ background: '#f9fafb', padding: '0.75rem', borderRadius: '0.5rem', marginBottom: '1rem', borderLeft: '3px solid #f97316' }}>
+                    <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.25rem' }}>
+                      {[...Array(5)].map((_, i) => (
+                        <span key={i} style={{ color: i < businessReviews[business.id][0].rating ? '#f97316' : '#d1d5db' }}>★</span>
+                      ))}
                     </div>
+                    <p style={{ fontSize: '0.875rem', color: '#374151', fontStyle: 'italic', margin: '0 0 0.25rem 0' }}>
+                      "{businessReviews[business.id][0].comment.substring(0, 80)}{businessReviews[business.id][0].comment.length > 80 ? '...' : ''}"
+                    </p>
+                    <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0 }}>
+                      — {businessReviews[business.id][0].user_name}
+                    </p>
+                  </div>
                 )}
-
                 
-                <button onClick={async () => { setSelectedBusiness(business); setShowBookingModal(true); await fetchBusinessDetails(business.id); }} style={{ width: '100%', backgroundColor: '#f97316', color: 'white', padding: '0.5rem', border: 'none', borderRadius: '0.5rem', cursor: 'pointer' }}>
+                <button onClick={() => { setSelectedBusiness(business); setShowBookingModal(true); fetchBusinessDetails(business.id); }} style={{ width: '100%', padding: '0.75rem', background: '#f97316', color: 'white', border: 'none', borderRadius: '0.5rem', fontSize: '1rem', fontWeight: '600', cursor: 'pointer' }}>
                   Réserver
                 </button>
               </div>

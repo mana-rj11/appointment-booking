@@ -2,6 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Star, Calendar, User, LogOut, Bell, X } from 'lucide-react';
 import API from './services/api';
 
+// Système de badges
+const getLoyaltyBadge = (points) => {
+  if (points >= 600) return { name: 'Platine', icon: '💎', color: '#E5E4E2', nextLevel: null, progress: 100 };
+  if (points >= 300) return { name: 'Or', icon: '🥇', color: '#FFD700', nextLevel: 600, progress: ((points - 300) / 300) * 100 };
+  if (points >= 100) return { name: 'Argent', icon: '🥈', color: '#C0C0C0', nextLevel: 300, progress: ((points - 100) / 200) * 100 };
+  return { name: 'Bronze', icon: '🥉', color: '#CD7F32', nextLevel: 100, progress: (points / 100) * 100 };
+};
+
 const BookServices = () => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedBookingForReview, setSelectedBookingForReview] = useState(null);
@@ -218,16 +226,22 @@ const BookServices = () => {
             <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>BookServices</h1>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               {isAuthenticated ? (
-                <>
-                  <div style={{ display: 'flex', gap: '0.5rem', backgroundColor: '#f3f4f6', padding: '0.5rem 1rem', borderRadius: '0.5rem', alignItems: 'center' }}>
-                    <User size={20} />
-                    <span>{currentUser?.name}</span>
-                    <span style={{ color: '#f97316' }}>({currentUser?.loyalty_points} pts)</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{ fontSize: '2rem' }}>{getLoyaltyBadge(currentUser.loyaltyPoints).icon}</span>
+                    <div>
+                      <div style={{ fontWeight: 'bold' }}>
+                        {currentUser.name} - {getLoyaltyBadge(currentUser.loyaltyPoints).name}
+                      </div>
+                      <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                        {currentUser.loyaltyPoints} points
+                      </div>
+                    </div>
                   </div>
-                  <button onClick={handleLogout} style={{ padding: '0.5rem 1rem', border: 'none', borderRadius: '0.5rem', cursor: 'pointer', background: 'white', color: '#dc2626' }}>
-                    <LogOut size={20} style={{ display: 'inline' }} /> Déconnexion
+                  <button onClick={handleLogout} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '0.5rem', cursor: 'pointer' }}>
+                     Déconnexion
                   </button>
-                </>
+                </div>
               ) : (
                 <button onClick={() => { setShowAuthModal(true); setAuthMode('login'); }} style={{ backgroundColor: '#f97316', color: 'white', padding: '0.5rem 1.5rem', border: 'none', borderRadius: '0.5rem', cursor: 'pointer' }}>
                   Se connecter
@@ -246,6 +260,37 @@ const BookServices = () => {
           </div>
         </div>
       </header>
+
+
+      {/* Système de fidélité - Version discrète */}
+      {currentUser && getLoyaltyBadge(currentUser.loyalty_points).nextLevel && (
+        <div style={{ maxWidth: '1200px', margin: '1rem auto', padding: '1rem 1.5rem', background: 'white', border: '1px solid #e5e7eb', borderRadius: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ fontSize: '1.5rem' }}>{getLoyaltyBadge(currentUser.loyalty_points).icon}</span>
+              <div>
+                <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827' }}>
+                  Niveau {getLoyaltyBadge(currentUser.loyalty_points).name}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                  {currentUser.loyalty_points} / {getLoyaltyBadge(currentUser.loyalty_points).nextLevel} points
+                </div>
+              </div>
+            </div>
+            <span style={{ fontSize: '1.25rem', opacity: 0.3 }}>{getLoyaltyBadge(getLoyaltyBadge(currentUser.loyalty_points).nextLevel).icon}</span>
+          </div>
+          <div style={{ background: '#f3f4f6', borderRadius: '999px', height: '0.5rem', overflow: 'hidden' }}>
+            <div style={{ 
+              background: '#f97316', 
+              height: '100%', 
+              width: `${getLoyaltyBadge(currentUser.loyalty_points).progress}%`,
+              transition: 'width 0.5s ease',
+              borderRadius: '999px'
+            }}></div>
+          </div>
+        </div>
+      )}
+
 
       <main style={{ maxWidth: '80rem', margin: '0 auto', padding: '2rem 1rem' }}>
         

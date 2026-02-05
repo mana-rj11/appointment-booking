@@ -47,7 +47,7 @@ const BookServices = () => {
     }
   }, [currentUser]);
 
-  useEffect(() => {
+  /** useEffect(() => {
     const loadData = async () => {
         await fetchBusinesses();
         // charger les avis pour chaque entreprise
@@ -55,6 +55,7 @@ const BookServices = () => {
         };
         loadData();
     }, []);
+    */
 
 
   const fetchUserProfile = async () => {
